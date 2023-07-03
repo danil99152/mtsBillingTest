@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
-import axios from 'axios';
-import { Typography, Box, Button, CircularProgress } from '@mui/material';
+import { Typography, Box, TextField, Button, Paper, CircularProgress } from '@mui/material';
 
-function App() {
+const App = () => {
   const [file, setFile] = useState(null);
   const [response, setResponse] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleFileChange = (event) => {
-    const selectedFile = event.target.files[0];
+  const handleFileChange = (e) => {
+    const selectedFile = e.target.files[0];
     setFile(selectedFile);
   };
 
@@ -16,22 +15,28 @@ function App() {
     event.preventDefault();
     setIsLoading(true);
 
-    try {
+    if (file) {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await axios.post('http://127.0.0.1:8000/process-cdr-file/', formData);
-      setResponse(response.data);
-      console.log(response.data)
-    } catch (error) {
-      console.error('Error:', error);
-    } finally {
+      try {
+        const response = await fetch('http://127.0.0.1:8000/process-cdr-file/', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const data = await response.json();
+        setResponse(data);
+      } catch (error) {
+        console.error('Error:', error);
+      } finally {
       setIsLoading(false);
+      }
     }
-  };
+  }
 
   return (
-      <Box sx={{ padding: '2rem', textAlign: 'center' }}>
+      <Box sx={{ padding: '2rem', textAlign: 'left' }}>
         <Typography variant="h4" component="h1" gutterBottom>
           MTS minibilling
         </Typography>
@@ -45,19 +50,22 @@ function App() {
         {isLoading && <CircularProgress sx={{ margin: '2rem 0' }} />}
 
         {response && (
-            <Box sx={{ marginTop: '2rem' }}>
-              <Typography variant="h5" component="h2" gutterBottom>
-                Пара префиксных зон и сумма длительности секунд разговоров:
-              </Typography>
+            <Paper elevation={3} style={{ padding: '20px', margin: '20px' }}>
+              <h2>Суммы секунд для префиксных зон:</h2>
               {Object.entries(response).map(([key, value]) => (
-                  <Typography variant="body1" gutterBottom key={key}>
-                    {key}: {value}
-                  </Typography>
+                  <TextField
+                      key={key}
+                      label={key}
+                      value={value}
+                      fullWidth
+                      margin="normal"
+                      variant="outlined"
+                  />
               ))}
-            </Box>
+            </Paper>
         )}
       </Box>
   );
-}
+};
 
 export default App;
